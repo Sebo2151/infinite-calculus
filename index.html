@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Random Cubic Curve‑Sketching Generator</title>
+  <title>Random Cubic Curve-Sketching Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body{font-family:system-ui, sans-serif;max-width:800px;margin:0 auto;padding:1.5rem;line-height:1.6}
@@ -16,7 +16,6 @@
     .solution p{margin:0.2rem 0}
     #solution{background:#fafafa;border-left:4px solid #ddd;padding:0.6rem 0.8rem;border-radius:4px}
   </style>
-  <!-- MathJax v3 -->
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
@@ -33,7 +32,8 @@
   <h3>LaTeX code</h3>
   <textarea id="latex" readonly></textarea>
 
-  <h2>Solution (click to toggle)</h2>
+  <h2>Solution</h2>
+  <button id="toggleSolution">Show Solution</button>
   <div id="solution" class="solution" style="display:none;"></div>
 
 <script>
@@ -43,7 +43,6 @@ function randInt(min, max){
 }
 
 function polyToLatex(a,b,c,d){
-  // Builds LaTeX string for 2x^3 + bx^2 + cx + d
   const parts=[];
   if(a!==0) parts.push(`${a===1? "":a}x^{3}`);
   if(b!==0) parts.push(`${b>0?"+":""}${b===1||b===-1? (b===-1?"-":"") : b}x^{2}`);
@@ -59,48 +58,47 @@ function generate(){
   let r1=randInt(min,max), r2;
   do{r2=randInt(min,max);}while(r2===r1);
 
-  // Construct polynomial with integer coefficients:
-  // f'(x)=6(x-r1)(x-r2)  =>  f(x)=2x^3 -3(r1+r2)x^2 +6r1r2 x + d
   const a=2;
   const b=-3*(r1+r2);
   const c=6*r1*r2;
   const d=randInt(-10,10);
 
-  // Display polynomial
   const latex=polyToLatex(a,b,c,d);
   document.getElementById('latex').value=`\\(${latex}\\)`;
   document.getElementById('poly').innerHTML=`\\(${latex}\\)`;
 
-  // Derivatives
   const fpLatex=`f'(x)=6x^{2} ${2*b>=0?'+':''}${2*b}x ${c>=0?'+':''}${c}`;
-  const fppCoef=12;
   const fppConst=2*b;
   const fppLatex=`f''(x)=12x ${fppConst>=0?'+':''}${fppConst}`;
 
-  // Critical points & behavior
   const smaller=Math.min(r1,r2), larger=Math.max(r1,r2);
   const infl=(r1+r2)/2;
-  const solHTML=`<p>\\(${fpLatex}\\)</p>
-                 <p>\\(${fppLatex}\\)</p>
-                 <p>Critical points at \\(x=${r1}\\) and \\(x=${r2}\\).</p>
-                 <p>Increasing on \\((-\infty, ${smaller})\\cup(${larger},\infty)\\), decreasing on \\(${smaller},${larger})\\).</p>
-                 <p>Inflection point at \\(x=${infl}\\).</p>
-                 <p>Concave down on \\((-\infty, ${infl})\\) and concave up on \\(${infl}, \infty)\\).</p>`;
+  const solHTML=`
+    <p>\\(${fpLatex}\\)</p>
+    <p>\\(${fppLatex}\\)</p>
+    <p>Critical points at \\(x=${r1}\\) and \\(x=${r2}\\).</p>
+    <p>Increasing on \\((-\\infty, ${smaller})\\cup(${larger},\\infty)\\), decreasing on \\(${smaller},${larger})\\).</p>
+    <p>Inflection point at \\(x=${infl}\\).</p>
+    <p>Concave down on \\((-\\infty, ${infl})\\) and concave up on \\(${infl}, \\infty)\\).</p>
+  `;
   const solDiv=document.getElementById('solution');
   solDiv.innerHTML=solHTML;
 
-  // Typeset with MathJax
   MathJax.typesetPromise();
 }
 
-document.getElementById('generateBtn').addEventListener('click',generate);
-// Toggle solution visibility
-const solBox=document.getElementById('solution');
-solBox.addEventListener('click',()=>{
-  solBox.style.display='none';
-});
-document.querySelector('h2:nth-of-type(3)').addEventListener('click',()=>{
-  solBox.style.display=solBox.style.display==='none'? 'block':'none';
+document.getElementById('generateBtn').addEventListener('click', generate);
+
+const solBox = document.getElementById('solution');
+const toggleBtn = document.getElementById('toggleSolution');
+toggleBtn.addEventListener('click', ()=> {
+  if (solBox.style.display === 'none') {
+    solBox.style.display = 'block';
+    toggleBtn.textContent = 'Hide Solution';
+  } else {
+    solBox.style.display = 'none';
+    toggleBtn.textContent = 'Show Solution';
+  }
 });
 </script>
 </body>
