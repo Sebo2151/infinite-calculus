@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Cubic Polynomial Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:system-ui, sans-serif;max-width:800px;margin:0 auto;padding:1.5rem;line-height:1.6}
+    h1{font-size:1.8rem;margin-bottom:1rem}
+    .control-group{display:block;margin:0.5rem 0}
+    label{margin-right:0.5rem}
+    input[type=number], input[type=checkbox]{margin-left:0.3rem}
+    button{padding:0.4rem 0.9rem;border:none;border-radius:6px;font-weight:600;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.15)}
+    button:hover{transform:translateY(-1px)}
+    textarea{width:100%;min-height:3rem;margin-top:0.3rem;font-family:monospace;font-size:0.95rem}
+    .math{margin:0.5rem 0;font-size:1.2rem}
+    .solution p{margin:0.2rem 0}
+    #solution{background:#fafafa;border-left:4px solid #ddd;padding:0.6rem 0.8rem;border-radius:4px;margin-top:0.5rem}
+  </style>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <h1>Random Cubic Polynomial Generator</h1>
+  <div id="controls">
+    <div class="control-group"><label>Min root:<input type="number" id="minRoot" value="-5"></label></div>
+    <div class="control-group"><label>Max root:<input type="number" id="maxRoot" value="5"></label></div>
+    <div class="control-group"><label><input type="checkbox" id="allowFrac">Allow fractional critical points</label></div>
+    <div class="control-group"><label>Max denominator:<input type="number" id="maxDen" value="5" min="1"></label></div>
+    <div class="control-group"><label>Min leading coef:<input type="number" id="minLead" value="1"></label></div>
+    <div class="control-group"><label>Max leading coef:<input type="number" id="maxLead" value="5"></label></div>
+    <button id="generateBtn">Generate</button>
+  </div>
+
+  <h2>Polynomial</h2>
+  <div id="poly" class="math"></div>
+
+  <h3>LaTeX code</h3>
+  <textarea id="latex" readonly></textarea>
+
+  <h2>Solution</h2>
+  <button id="toggleSolution">Show Solution</button>
+  <div id="solution" style="display:none;"></div>
+
+<script>
+function gcd(a,b){return b?gcd(b,a%b):a;}
+function lcm(a,b){return a*b/gcd(a,b);}
+function simplifyFrac(n,d){var g=gcd(Math.abs(n),Math.abs(d));n/=g;d/=g; if(d<0){n=-n;d=-d;}return{n:d===0?0:n,d};}
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function getRandomRoot(min,max,allowFrac,maxDen){if(!allowFrac){var n=randInt(min,max);return{n:d=1,val:n};}var den=randInt(1,maxDen);var n=randInt(min*den,max*den);var f=simplifyFrac(n,den);return{n:f.n,d:f.d,val:f.n/f.d};}
+function formatTerm(frac,variable,power){if(frac.n===0)return"";var sign=frac.n>0?"+":"-";var absN=Math.abs(frac.n),den=frac.d;var coeff="";if(absN!==1||power===0){coeff=den===1?absN.toString():"\\frac{"+absN+"}{"+den+"}";}var varPart=variable?(variable+(power>1?"^{"+power+"}":"")):"";return sign+coeff+varPart;}
+function polyToLatex(aFrac,bFrac,cFrac,dFrac){var parts=[formatTerm(aFrac,"x",3),formatTerm(bFrac,"x",2),formatTerm(cFrac,"x",1),formatTerm(dFrac,"",0)];var expr=parts.join("");if(expr[0]==='+')expr=expr.slice(1);return"f(x)="+expr;}
+document.getElementById('generateBtn').addEventListener('click',function(){var min=parseInt(document.getElementById('minRoot').value),max=parseInt(document.getElementById('maxRoot').value);if(min>=max){alert("Min must be < Max");return;}var allowFrac=document.getElementById('allowFrac').checked,maxDen=parseInt(document.getElementById('maxDen').value);var r1=getRandomRoot(min,max,allowFrac,maxDen),r2;do{r2=getRandomRoot(min,max,allowFrac,maxDen);}while(r1.n===r2.n&&r1.d===r2.d);var minLead=parseInt(document.getElementById('minLead').value),maxLead=parseInt(document.getElementById('maxLead').value);var a;do{a=randInt(minLead,maxLead);}while(a===0);var denSum=lcm(r1.d,r2.d),numSum=r1.n*(denSum/r1.d)+r2.n*(denSum/r2.d),sum=simplifyFrac(numSum,denSum);var prod=simplifyFrac(r1.n*r2.n,r1.d*r2.d);var bFrac=simplifyFrac(-3*a*sum.n,2*sum.d),cFrac=simplifyFrac(3*a*prod.n,prod.d),dFrac=simplifyFrac(randInt(-10,10),1),aFrac=simplifyFrac(a,1);var latex=polyToLatex(aFrac,bFrac,cFrac,dFrac);document.getElementById('latex').value="\\("+latex+"\\)";document.getElementById('poly').innerHTML="\\("+latex+"\\)";var fpA=simplifyFrac(3*aFrac.n,aFrac.d),fpB=simplifyFrac(2*bFrac.n,bFrac.d),fpC=cFrac,fpLatex=formatTerm(fpA,"x",2)+formatTerm(fpB,"x",1)+formatTerm(fpC,"",0),fppA=simplifyFrac(6*aFrac.n,aFrac.d),fppB=simplifyFrac(2*bFrac.n,bFrac.d),fppLatex=formatTerm(fppA,"x",1)+formatTerm(fppB,"",0),lower=r1.val<r2.val?r1:r2,upper=r1.val<r2.val?r2:r1,inflFrac=simplifyFrac(-bFrac.n,3*aFrac.n*bFrac.d),sol="<p>\\("+fpLatex+"\\)</p><p>\\("+fppLatex+"\\)</p><p>Critical points at x="+(r1.d===1?r1.n:"\\frac{"+r1.n+"}{"+r1.d+"}")+" and x="+(r2.d===1?r2.n:"\\frac{"+r2.n+"}{"+r2.d+"}")+".</p><p>Increasing on (-\\infty,"+(lower.d===1?lower.n:("\\frac{"+lower.n+"}{"+lower.d+"}"))+")\\cup("+(upper.d===1?upper.n:("\\frac{"+upper.n+"}{"+upper.d+"}"))+",\\infty), decreasing on ("+(lower.d===1?lower.n:("\\frac{"+lower.n+"}{"+lower.d+"}"))+","+(upper.d===1?upper.n:("\\frac{"+upper.n+"}{"+upper.d+"}"))+").</p><p>Inflection point at x="+(inflFrac.d===1?inflFrac.n:("\\frac{"+inflFrac.n+"}{"+inflFrac.d+"}"))+".</p><p>Concave down on (-\\infty,"+(inflFrac.d===1?inflFrac.n:("\\frac{"+inflFrac.n+"}{"+inflFrac.d+"}"))+"), concave up on ("+(inflFrac.d===1?inflFrac.n:("\\frac{"+inflFrac.n+"}{"+inflFrac.d+"}"))+",\\infty).</p>";var solDiv=document.getElementById('solution');solDiv.innerHTML=sol;MathJax.typesetPromise();});var solBox=document.getElementById('solution'),btn=document.getElementById('toggleSolution');btn.addEventListener('click',function(){if(solBox.style.display==='none'){solBox.style.display='block';btn.textContent='Hide Solution';}else{solBox.style.display='none';btn.textContent='Show Solution';}});
+</script>
+</body>
+</html>
